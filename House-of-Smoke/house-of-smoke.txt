@@ -541,7 +541,8 @@ IX - Repository of PoCs
 In this repo you can find PoCs for each libc version between 2.26 and 2.41
 as well as libc & ld builds for each version so you can test it and play
 with it yourself.
-REPO URL
+
+https://github.com/tabacc0/HeapResearch.git
 
 - References 
 [1] github.com/shellphish/how2heap/blob/d9c79f5d/glibc_2.24/house_of_gods.c
