@@ -167,14 +167,12 @@ The bin is traversed backwards with the ->bk bin pointer , if there is a
 chunk in the bin (bin->bk != bin) , the chunk is unlinked , we start with:
 ```text
            --------------------------------------------------|
-           |						                                     |
+           |						     |
          -----        -------       -------                  |
         | bin | -bk->|chunk A|-bk->|chunk B|-bk->....-bk->---|
    --fd-|     |<-fd- |       |<-fd-|       |<-fd-....<-----|
    |     -----        -------       -------                |
    |-------------------------------------------------------|
-
-
 ```
 the lines:
 	            bin->bk = bck;
@@ -182,13 +180,12 @@ the lines:
 execute with bck being B ,and we end up with :
 
 ```text
-
            ------------------------------------|
-           |				                           |
+           |				       |
          -----        -------                  |
         | bin | -bk->|chunk B|-bk->....-bk->---|
   -<-fd-|     |<-fd- |       |<-fd-....<-----|
-  |      -----        -------		             |
+  |      -----        -------		     |
   |------------------------------------------|
 ```
 However , before the unlinking happens , malloc makes sure the linked list is not currupt by verifying that B->fd == A
