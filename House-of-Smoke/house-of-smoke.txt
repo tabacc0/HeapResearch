@@ -43,13 +43,11 @@ This trick works on all builds I found  tcache versions up to 2.41, meaning
 from 2.26-2.41, and its breaking on >2.41 is mainly an alignment problem 
 rather than by some specific mitigation for this path.
 
-IMPORTANT NOTE : this technique is build specific , there is no checks in 
-libc any versions up to 2.44 that prevent it from working , however things 
-like bin alignement and even compiler optimization can prevent it from being
-applicable , an example of this is a compliter optimization in ubuntu builds
-of libc versions 2.31 to 2.34 that cache the tcache head in the stashing loop
-, the caching prevent the trick of this technique from making an effect, there
-could be other cases of unpredictable build conditions breaking the technique.
+IMPORTANT NOTE : this technique is build specific , there is no checks the I 
+found in libc any versions up to 2.44 that prevent it from working , however
+things like bin alignement and even compiler optimization can prevent it from 
+being applicable , there could be other cases of unpredictable build conditions
+breaking the technique.
 
 II - History Of targeting the Main Arena
 
@@ -285,7 +283,7 @@ Suppose we have a chunk in the smallbin, let's call it victim, and we can
 corrupt its ->bk pointer to point to a fake freelist constructed in memory
 in this fashion:
 
-fake_chunk1-bk>fake_chunk2-bk>..-bk>fake_chunkN-bk->tcache_size_entry-0x10
+fake_chunk1-bk>fake_chunk2-bk>..-bk>fake_chunkN-bk->target_tcache_entry-0x10
 
 Note : the ->fd pointer of the head of the fake freelist should point to 
        victim to bypass:
@@ -301,7 +299,7 @@ as long as we know the heap layout, which we do if we can make and predict
 mallocs made by the program, we can calculate the exact size
 entry inside the Tcache.
 
-Now, if we call on that exact smallbin size, first the victim chunk we
+Now, if we call malloc on that exact smallbin size, first the victim chunk we
 corrupted the ->bk of gets unlinked and stored in victim (in the process
 the ->fd of our fake freelist's head is checked to be equal to victim ),
 and the tcache loop starts filling the corresponding tcache bin with a 
@@ -313,14 +311,16 @@ the last element of the freelist is unlinked :
 	            tcache_put (tc_victim, tc_idx);
 
 The Address of the smallbin is written to (fake_chunkN->bk)->fd; remember
-that fake_chunkN->bk points to the entry in the Tcache of this exact
-smallbin size; this means that the bin address gets written as the Tcache
-bin's head while the bin chunk count is N-1, and immediately after,
-fake_chunkN is inserted, making it the head of the list, and the SmallBin
-address second to head, Tcache bin count reaches N, so the loop stops.
+that fake_chunkN->bk points to an entry in the Tcache that already has a chunk
+this means that the bin address gets written as the Tcache bin's head,the last 
+element of the fake list is inserted normally after that , while the 
+overwritten tcache entry now holds a bin address.
 
-What follows is one malloc to get fake_chunkN and make the SmallBin address
-the head; the following allocation yields the SmallBin address.
+What follows is one malloc of the size of the tcache entry that we write the 
+bin address in ,yields the SmallBin address.
+Note : the target tcache entry should already have a chunk in it so the chunk
+count for that entry is > 0 , this can be done by allocating a chunk of that
+size and freeing it , we then overwrite its address in the entry win the bin.
 
 Note: we don't need to worry about safe-linking because we write the head
 to tcache, which stores the bin heads without mangling them, and libc
