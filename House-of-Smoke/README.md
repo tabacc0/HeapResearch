@@ -166,13 +166,14 @@ if (in_smallbin_range (nb))
 The bin is traversed backwards with the ->bk bin pointer , if there is a
 chunk in the bin (bin->bk != bin) , the chunk is unlinked , we start with:
 ```text
-
-           |						     |
+           --------------------------------------------------|
+           |						                                     |
          -----        -------       -------                  |
         | bin | -bk->|chunk A|-bk->|chunk B|-bk->....-bk->---|
    --fd-|     |<-fd- |       |<-fd-|       |<-fd-....<-----|
    |     -----        -------       -------                |
    |-------------------------------------------------------|
+
 
 ```
 the lines:
@@ -181,17 +182,15 @@ the lines:
 execute with bck being B ,and we end up with :
 
 ```text
+
            ------------------------------------|
-           |				       |
+           |				                           |
          -----        -------                  |
         | bin | -bk->|chunk B|-bk->....-bk->---|
   -<-fd-|     |<-fd- |       |<-fd-....<-----|
-  |      -----        -------		     |
+  |      -----        -------		             |
   |------------------------------------------|
-
-
 ```
-           --------------------------------------------------|
 However , before the unlinking happens , malloc makes sure the linked list is not currupt by verifying that B->fd == A
 
 
@@ -498,15 +497,9 @@ https://github.com/tabacc0/HeapResearch.git
 
 - References
 [1] github.com/shellphish/how2heap/blob/d9c79f5d/glibc_2.24/house_of_gods.c
-[2] github.com/shellphish/how2heap/blob/master/glibc_2.36/
-    house_of_mind_fastbin.c
-[3] https://github.com/shellphish/how2heap/blob/master/glibc_2.40/
-    tcache_stashing_unlink_attack.c
-[4] https://elixir.bootlin.com/glibc/glibc-2.41/source/malloc/
-    malloc.c#L3120
-[5] https://elixir.bootlin.com/glibc/glibc-2.41/source/malloc/
-    malloc.c#L4035
-[6] https://elixir.bootlin.com/glibc/glibc-2.31/source/malloc/
-    malloc.c#L2934
-[7] https://elixir.bootlin.com/glibc/glibc-2.32/source/malloc/
-    malloc.c#L2949
+[2] github.com/shellphish/how2heap/blob/master/glibc_2.36/house_of_mind_fastbin.c
+[3] https://github.com/shellphish/how2heap/blob/master/glibc_2.40/tcache_stashing_unlink_attack.c
+[4] https://elixir.bootlin.com/glibc/glibc-2.41/source/malloc/malloc.c#L3120
+[5] https://elixir.bootlin.com/glibc/glibc-2.41/source/malloc/malloc.c#L4035
+[6] https://elixir.bootlin.com/glibc/glibc-2.31/source/malloc/malloc.c#L2934
+[7] https://elixir.bootlin.com/glibc/glibc-2.32/source/malloc/malloc.c#L2949
