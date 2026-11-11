@@ -17,7 +17,7 @@
 	- The House of Smoke
 		- V1
 		- V1-PoC
-		- V1
+		- V2
 		- V2-PoC
 	- Why It Does not Work On glibc >= 2.42?
 		- The Hidden dependency
@@ -43,7 +43,15 @@ This trick works on all builds I found  tcache versions up to 2.41, meaning
 from 2.26-2.41, and its breaking on >2.41 is mainly an alignment problem 
 rather than by some specific mitigation for this path.
 
-II - History Of targeting the Arena
+IMPORTANT NOTE : this technique is build specific , there is no checks in 
+libc any versions up to 2.44 that prevent it from working , however things 
+like bin alignement and even compiler optimization can prevent it from being
+applicable , an example of this is a compliter optimization in ubuntu builds
+of libc versions 2.31 to 2.34 that cache the tcache head in the stashing loop
+, the caching prevent the trick of this technique from making an effect, there
+could be other cases of unpredictable build conditions breaking the technique.
+
+II - History Of targeting the Main Arena
 
 Exercising control over the arena is not a new trick. The House of Gods
 has long since established this exact idea for glibc versions before 2.27
