@@ -52,15 +52,15 @@ Aside from these known techniques, little research has focused on controlling th
 #### - the achieved primitives
 - This technique has two versions :
 	- V1
-	* return the address of a smallbin in the main arena as a chunk
+	    - return the address of a smallbin in the main arena as a chunk
 
 	- V2
-	* return an arbitrary location where we can forge a chunk
-	* return the address of a smallbin in the main arena as a chunk immediately after.
+	    - return an arbitrary location where we can forge a chunk
+	    - return the address of a smallbin in the main arena as a chunk immediately after.
 
 	- Further Capability
-	* assuming the attacker can read malloc-ed chunks , this provides a libc leak in the first 8 bytes of the allocated libc address.
-	* assuming the attacker has the capability of both reading and  writing to malloc-ed chunks and can repeat the technique , control over the aread after the arena can be achieved , including IO structures and others.
+	    - assuming the attacker can read malloc-ed chunks , this provides a libc leak in the first 8 bytes of the allocated libc address.
+	    - assuming the attacker has the capability of both reading and  writing to malloc-ed chunks and can repeat the technique , control over the aread after the arena can be achieved , including IO structures and others.
 
 
 
