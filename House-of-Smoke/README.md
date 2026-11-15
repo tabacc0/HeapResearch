@@ -1,6 +1,6 @@
 - table of contents
 	- General Info
-	- History Of targeting the Thread Arena
+	- History Of targeting the Main Arena
 	- Introduction
 	- Achieved primitives & pre-requisites
 		- the achieved primitive
@@ -21,7 +21,7 @@
 		- V2-PoC
 	- Why It Does not Work On glibc >= 2.42?
 		- The Hidden dependency
-	- Seeing Beyon The Smoke, What can you Do?
+	- Seeing Beyond The Smoke, What can you Do?
 		- Assuming read capability
 		- Assuming read/write
 	- Conclusion
@@ -414,7 +414,7 @@ tcache_get (size_t tc_idx)
 [7]
  I am considering the 64-bit architecture here; this is a problem because while the bin addresses in the main arena are typically aligned to 8, they are not necessarily aligned to 0x10 , they aligned to 0x10 on all the builds I have found and tested and/or built myself, from versions 2.26 to 2.41 , the builds (arch & ubuntu) versions 2.42 and higher, however, all seem to have the bin addresses only aligned to 8, this making tcache panic when returning the bin address.
 
-## Seeing Beyon The Smoke, What can you Do?
+## Seeing Beyond The Smoke, What can you Do?
 
 ### Assuming read capability
 This one is simple; the address returned points directly to a libc address since every bin's links are populated by the bin's own address, so any kind of read, whether by write or printf or similar, should leak a libc address.

@@ -1,6 +1,6 @@
 - table of contents 
 	- General Info 
-	- History Of targeting the Thread Arena
+	- History Of targeting the Main Arena
 	- Introduction
 	- Achieved primitives & pre-requisites
 		- the achieved primitive
@@ -21,7 +21,7 @@
 		- V2-PoC
 	- Why It Does not Work On glibc >= 2.42?
 		- The Hidden dependency
-	- Seeing Beyon The Smoke, What can you Do?
+	- Seeing Beyond The Smoke, What can you Do?
 		- Assuming read capability
 		- Assuming read/write 
 	- Conclusion
@@ -43,7 +43,7 @@ This trick works on all builds I found  tcache versions up to 2.41, meaning
 from 2.26-2.41, and its breaking on >2.41 is mainly an alignment problem 
 rather than by some specific mitigation for this path.
 
-IMPORTANT NOTE : this technique is build specific , there is no checks the I 
+IMPORTANT NOTE : this technique is build specific , there is no checks that I 
 found in libc any versions up to 2.44 that prevent it from working , however
 things like bin alignement and even compiler optimization can prevent it from 
 being applicable , there could be other cases of unpredictable build conditions
@@ -502,7 +502,7 @@ builds I have found and tested and/or built myself, from versions 2.26 to
 seem to have the bin addresses only aligned to 8, this making tcache panic 
 when returning the bin address.
 
-VII - Seeing Beyon The Smoke, What can you Do?
+VII - Seeing Beyond The Smoke, What can you Do?
 
 VII.1 - Assuming read capability
 This one is simple; the address returned points directly to a libc address
