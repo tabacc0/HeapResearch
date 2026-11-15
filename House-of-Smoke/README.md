@@ -493,9 +493,10 @@ In this repo you can find PoCs for each libc version between 2.26 and 2.41 as we
 https://github.com/tabacc0/HeapResearch.git
 
 - References
-[1] github.com/shellphish/how2heap/blob/d9c79f5d/glibc_2.24/house_of_gods.c
 
-[2] github.com/shellphish/how2heap/blob/master/glibc_2.36/house_of_mind_fastbin.c
+[1] https://github.com/shellphish/how2heap/blob/d9c79f5d/glibc_2.24/house_of_gods.c
+
+[2] https://github.com/shellphish/how2heap/blob/master/glibc_2.36/house_of_mind_fastbin.c
 
 [3] https://github.com/shellphish/how2heap/blob/master/glibc_2.40/tcache_stashing_unlink_attack.c
 
