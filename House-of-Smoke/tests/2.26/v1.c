@@ -56,7 +56,7 @@ int main(int argc, char * argv[]){
 	//our freelist 
 	char *p3 = malloc(0x100);
 	//this allocates the smallbin address
-	char **p5 = malloc(0x110);
-	assert((long)p5 == (long)smallbin);
+	char **allocated = malloc(0x110);
+	assert((long)allocated == (long)smallbin);
 	exit(0);
 }

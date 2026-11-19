@@ -60,7 +60,7 @@ int main(int argc, char * argv[]){
 	char *alloc1 = malloc(0x100);
 	assert((long)alloc1 == (long)target);
 	//this allocates the smallbin address
-	char *alloc2 = malloc(0x110);
-	assert((long)alloc2 == (long)smallbin);
+	char *allocated = malloc(0x110);
+	assert((long)allocated == (long)smallbin);
 	exit(0);
 }
