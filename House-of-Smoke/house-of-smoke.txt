@@ -505,12 +505,19 @@ when returning the bin address.
 VII - Seeing Beyond The Smoke, What can you Do?
 
 VII.1 - Assuming read capability
-This one is simple; the address returned points directly to a libc address
-since every bin's links are populated by the bin's own address, so any kind
-of read, whether by write or printf or similar, should leak a libc address.
 
-adding a  printf("%p\n",alloc2[0]); to the previous PoC prints a libc 
-address.
+Assuming read access , we can have a leak by tricking malloc into writing
+a bin address at the bin we allocated at after we initialize it , this can be
+done by preparing a chunk of a size corresponding to the said bin , then
+putting it in the said bin either by filling tcache or the trimming method
+(see PoCs), when we land on the bin we have to overwrite its contents 
+(otherwise this technique would assume an uninitialized read vulnerability)
+,if we write the address of prepared chunk (which we know the address of
+because we have a heap leak) and because the chunk is already "freed" and 
+has bin links in it , a subsequent malloc of the corresponding size returns
+that "freed" chunk and writes the bin address back to the bin links, thus
+writing a libc address in the arena area we allocated after we have 
+initialized it, next, reading the chunk yields a libc leak.
 
 VII.2 - Assuming read/write
 
